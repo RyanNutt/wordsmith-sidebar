@@ -18,10 +18,12 @@ class Wordsmith_Sidebar extends WP_Widget {
         parent::__construct(false, __('Word of the Day', 'wordsmith-sidebar'), array('description' => __('Display a word of the day from Wordsmith.org', 'wordsmith-sidebar'))); 
     }
     
+    /** No options, so nothing to do here */ 
     public function form($instance) {
         _e('<p>There are not any options for this widget</p>', 'wordsmith-sidebar'); 
     }
     
+    /** No options, so nothing to do here */
     public function update($new_instance, $old_instance) {
         return $old_instance; 
     }
@@ -48,7 +50,9 @@ class Wordsmith_Sidebar extends WP_Widget {
         if ($word === false) {
             require_once(ABSPATH . WPINC . '/feed.php'); 
             
+            add_filter('wp_feed_cache_transient_lifetime', array($this, 'feed_cache_filter'));
             $rss = fetch_feed(self::RSS_FEED);
+            remove_filter('wp_feed_cache_transient_lifetime', array($this, 'feed_cache_filter')); 
             
             if (is_wp_error($rss)) {
                 return false; 
@@ -68,6 +72,18 @@ class Wordsmith_Sidebar extends WP_Widget {
         }
         
         return $word;
+    }
+    
+    /**
+     * Override the default RSS cache time. This is turned on right before
+     * the fetch request and turned off right after so it shouldn't affect
+     * any other calls. 
+     * 
+     * @param type $seconds
+     * @return type
+     */
+    public function feed_cache_filter($seconds) {
+        return self::TRANSIENT_LENGTH;
     }
     
 }
